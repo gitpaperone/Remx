@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Inscription - Remx</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .register-container {
+      background: var(--background, #1a1a1a);
+      color: var(--text-color, #fff);
+      padding: 2rem;
+      border-radius: 1rem;
+      box-shadow: 0 0 15px rgba(0,0,0,0.5);
+      width: 300px;
+    }
+
+    .register-container h1 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    input[type="text"], input[type="password"] {
+      width: 100%;
+      padding: 0.7rem;
+      margin: 0.5rem 0;
+      border: none;
+      border-radius: 0.5rem;
+    }
+
+    button {
+      width: 100%;
+      padding: 0.7rem;
+      background: #2196F3;
+      color: white;
+      border: none;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background: #1976D2;
+    }
+
+    #message {
+      text-align: center;
+      margin-top: 1rem;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="register-container">
+    <h1>Créer un compte</h1>
+    <form id="registerForm">
+      <input type="text" id="username" placeholder="Nom d'utilisateur" required>
+      <input type="password" id="password" placeholder="Mot de passe" required>
+      <button type="submit">S'inscrire</button>
+    </form>
+    <div id="message"></div>
+  </div>
+
+  <script>
+    const form = document.getElementById('registerForm');
+    const message = document.getElementById('message');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      message.textContent = '';
+
+      const username = form.username.value;
+      const password = form.password.value;
+
+      const res = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        message.style.color = 'lightgreen';
+        message.textContent = "Inscription réussie ✅ Redirection...";
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 1000);
+      } else {
+        message.style.color = 'red';
+        message.textContent = data.error || "Erreur inconnue";
+      }
+    });
+  </script>
+</body>
+</html>

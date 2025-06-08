@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Remx - Bibliothèque</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Remx</h1>
+    <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+      <input type="text" id="search" placeholder="Rechercher une musique...">
+      <select id="sortSelect">
+        <option value="alpha">Trier A-Z</option>
+        <option value="recent">Trier par date</option>
+      </select>
+    </div>
+  </header>
+
+  <main>
+    <section id="music-list">
+      <!-- Musiques générées dynamiquement -->
+    </section>
+  </main>
+
+  <footer>
+    <div id="player">
+      <img id="cover" src="covers/default.jpg" alt="cover">
+      <div id="now-playing">Aucune lecture</div>
+      <audio id="audio"></audio>
+      <button id="playPause">▶️</button>
+      <input type="range" id="seekBar" value="0">
+      <span id="currentTime">0:00</span> / <span id="duration">0:00</span>
+
+      <!-- Contrôles -->
+      <input type="range" id="volumeControl" min="0" max="1" step="0.01" title="Volume">
+      <button id="loopBtn" title="Répéter">🔁</button>
+      <button id="shuffleBtn" title="Aléatoire">🔀</button>
+      <span id="playCount" style="margin-left:auto; font-size: 0.8rem;"></span>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Remx - Accueil</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+  <h1 style="margin: 0;">Remx</h1>
+
+  <div style="display: flex; gap: 1rem; align-items: center;">
+    <input type="text" id="search" placeholder="Rechercher une musique...">
+    <select id="sortSelect">
+      <option value="alpha">Trier A-Z</option>
+      <option value="recent">Trier par date</option>
+    </select>
+    <a href="library.html" class="nav-link">Bibliothèque</a>
+  </div>
+
+  <!-- Zone utilisateur à droite -->
+  <div id="userArea" style="
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 0.9rem;
+  ">
+    <!-- Contenu injecté via JavaScript -->
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <h2>Bienvenue sur Remx</h2>
+    <p>Votre plateforme musicale personnelle, de la musique pour tous.</p>
+    <a href="library.html" class="cta-button">Explorer la bibliothèque</a>
+  </section>
+
+  <section class="features">
+    <h3>Genres populaires</h3>
+    <div class="tags">
+      <span>Lo-Fi</span>
+      <span>Chill</span>
+      <span>Jazz</span>
+      <span>Hip-Hop</span>
+      <span>Ambient</span>
+      <span>Électro</span>
+    </div>
+  </section>
+
+  <section class="features">
+    <h3>Pourquoi Remx ?</h3>
+    <p>🎵 Interface épurée, 🎧 Lecture instantanée, 💾 Statistiques locales, 🌙 Mode sombre, et plus encore.</p>
+  </section>
+</main>
+
+<footer>
+  © 2025 Remx — Développé avec ❤️
+</footer>
+
+<!-- Script : affichage utilisateur (connecté ou pas) -->
+<script>
+  const userArea = document.getElementById('userArea');
+
+  fetch('/api/profile')
+    .then(res => {
+      if (res.status === 401) throw new Error('Non connecté');
+      return res.json();
+    })
+    .then(data => {
+      const usernameSpan = document.createElement('span');
+      usernameSpan.textContent = "👤 " + data.username;
+
+      const logoutBtn = document.createElement('button');
+      logoutBtn.textContent = "Déconnexion";
+      logoutBtn.style.cursor = 'pointer';
+      logoutBtn.onclick = () => {
+        fetch('/api/logout', { method: 'POST' }).then(() => location.reload());
+      };
+
+      userArea.appendChild(usernameSpan);
+      userArea.appendChild(logoutBtn);
+    })
+    .catch(() => {
+      const login = document.createElement('a');
+      login.href = '/login.html';
+      login.textContent = 'Connexion';
+      login.className = 'nav-link';
+
+      const register = document.createElement('a');
+      register.href = '/register.html';
+      register.textContent = 'Inscription';
+      register.className = 'nav-link';
+
+      userArea.appendChild(login);
+      userArea.appendChild(register);
+    });
+</script>
+
+</body>
+</html>
