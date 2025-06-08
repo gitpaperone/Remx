@@ -9,22 +9,70 @@ const playPauseBtn = document.getElementById('playPause');
 const seekBar = document.getElementById('seekBar');
 const currentTimeEl = document.getElementById('currentTime');
 const durationEl = document.getElementById('duration');
+const volumeControl = document.getElementById('volumeControl');
+const loopBtn = document.getElementById('loopBtn');
+const shuffleBtn = document.getElementById('shuffleBtn');
+const playCountEl = document.getElementById('playCount');
+const userArea = document.getElementById('userArea');
 
 let allTracks = [];
+let isShuffle = false;
+let currentTrackTitle = null;
 
-// Récupère les musiques
-fetch('/api/music')
-  .then(res => res.json())
-  .then(data => {
-    allTracks = data;
-    renderTracks();
-  })
-  .catch(err => {
-    console.error("Erreur de chargement des pistes :", err);
+// Supabase
+const { createClient } = supabase;
+const supabaseClient = createClient(
+  'https://TON_URL_SUPABASE.supabase.co',
+  'TON_ANON_KEY'
+);
+const BUCKET = 'musics';
+const FOLDER = 'uploads';
+
+// Récupération des musiques
+async function fetchTracksFromSupabase() {
+  const { data: files, error } = await supabaseClient
+    .storage
+    .from(BUCKET)
+    .list(FOLDER, { limit: 100 });
+
+  if (error || !files) {
+    console.error("Erreur de chargement des pistes :", error?.message);
     listEl.innerHTML = "<p>Impossible de charger les musiques.</p>";
+    return;
+  }
+
+  const mp3Files = files.filter(f => f.name.endsWith('.mp3'));
+  const jpgFiles = files.filter(f => f.name.endsWith('.jpg'));
+
+  allTracks = mp3Files.map(mp3 => {
+    const title = mp3.name.replace('.mp3', '');
+    const image = jpgFiles.find(img => img.name === `${title}.jpg`);
+    const filePath = `${FOLDER}/${mp3.name}`;
+    const coverPath = image ? `${FOLDER}/${image.name}` : "covers/default.jpg";
+
+    const audioUrl = supabaseClient
+      .storage
+      .from(BUCKET)
+      .getPublicUrl(filePath).publicUrl;
+
+    const coverUrl = image
+      ? supabaseClient.storage.from(BUCKET).getPublicUrl(coverPath).publicUrl
+      : "covers/default.jpg";
+
+    return {
+      title,
+      file: audioUrl,
+      cover: coverUrl,
+      date: new Date(mp3.created_at || Date.now())
+    };
   });
 
-// Affiche les pistes
+  renderTracks();
+}
+
+fetchTracksFromSupabase();
+
+// Affichage des musiques
 function renderTracks(filter = "") {
   listEl.innerHTML = '';
   let filtered = allTracks.filter(track =>
@@ -39,33 +87,48 @@ function renderTracks(filter = "") {
   }
 
   if (filtered.length === 0) {
-  listEl.innerHTML = "<p>Aucun morceau trouvé 🎵</p>";
-} else {
-  filtered.forEach(track => {
-    const div = document.createElement('div');
-    div.className = 'track';
-    div.innerHTML = `
-      <img src="${track.cover || 'covers/default.jpg'}" alt="cover" style="width:100%; border-radius: 8px;" />
-      <h3>${track.title}</h3>
-    `;
-    div.onclick = () => playTrack(track);
-    listEl.appendChild(div);
-  });
-}
+    listEl.innerHTML = "<p>Aucun morceau trouvé 🎵</p>";
+  } else {
+    filtered.forEach(track => {
+      const div = document.createElement('div');
+      div.className = 'track';
+      div.innerHTML = `
+        <img src="${track.cover}" alt="cover" style="width:100%; border-radius: 8px;" />
+        <h3>${track.title}</h3>
+      `;
+      div.onclick = () => playTrack(track);
+      listEl.appendChild(div);
+    });
+  }
 }
 
-// Statistique
+// Lecture d'un morceau
+function playTrack(track) {
+  audio.src = track.file;
+  audio.play();
+  nowPlaying.textContent = "Lecture : " + track.title;
+  coverImg.src = track.cover;
+  incrementStat(track.title);
+  updatePlayCount(track.title);
+  currentTrackTitle = track.title;
+}
+
+// Incrémentation des stats
 function incrementStat(title) {
   const key = 'play_' + title;
   let count = parseInt(localStorage.getItem(key) || "0");
   localStorage.setItem(key, count + 1);
 
-  // Envoie aussi la stat au serveur pour le Top 5
   fetch('/api/play', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ title })
   });
+}
+
+function updatePlayCount(title) {
+  const count = localStorage.getItem('play_' + title) || "0";
+  playCountEl.textContent = `Écoutes : ${count}`;
 }
 
 // Recherche et tri
@@ -87,37 +150,35 @@ themeSwitch?.addEventListener('change', () => {
 });
 
 // Contrôles audio
-if (playPauseBtn && audio && seekBar) {
-  playPauseBtn.addEventListener('click', () => {
-    audio.paused ? audio.play() : audio.pause();
-  });
+playPauseBtn.addEventListener('click', () => {
+  audio.paused ? audio.play() : audio.pause();
+});
 
-  audio.addEventListener('play', () => {
-    playPauseBtn.textContent = '⏸️';
-  });
+audio.addEventListener('play', () => {
+  playPauseBtn.textContent = '⏸️';
+});
 
-  audio.addEventListener('pause', () => {
-    playPauseBtn.textContent = '▶️';
-  });
+audio.addEventListener('pause', () => {
+  playPauseBtn.textContent = '▶️';
+});
 
-  audio.addEventListener('loadedmetadata', () => {
-    seekBar.max = audio.duration;
-    durationEl.textContent = formatTime(audio.duration);
-  });
+audio.addEventListener('loadedmetadata', () => {
+  seekBar.max = audio.duration;
+  durationEl.textContent = formatTime(audio.duration);
+});
 
-  audio.addEventListener('timeupdate', () => {
-    seekBar.value = audio.currentTime;
-    currentTimeEl.textContent = formatTime(audio.currentTime);
-  });
+audio.addEventListener('timeupdate', () => {
+  seekBar.value = audio.currentTime;
+  currentTimeEl.textContent = formatTime(audio.currentTime);
+});
 
-  seekBar.addEventListener('input', () => {
-    audio.currentTime = seekBar.value;
-  });
+seekBar.addEventListener('input', () => {
+  audio.currentTime = seekBar.value;
+});
 
-  audio.addEventListener('error', () => {
-    nowPlaying.textContent = "Erreur de lecture 😞";
-  });
-}
+audio.addEventListener('error', () => {
+  nowPlaying.textContent = "Erreur de lecture 😞";
+});
 
 // Format MM:SS
 function formatTime(seconds) {
@@ -125,12 +186,6 @@ function formatTime(seconds) {
   const sec = Math.floor(seconds % 60).toString().padStart(2, '0');
   return `${min}:${sec}`;
 }
-const volumeControl = document.getElementById('volumeControl');
-const loopBtn = document.getElementById('loopBtn');
-const shuffleBtn = document.getElementById('shuffleBtn');
-const playCountEl = document.getElementById('playCount');
-
-let isShuffle = false;
 
 // Volume
 volumeControl.addEventListener('input', () => {
@@ -149,32 +204,7 @@ shuffleBtn.addEventListener('click', () => {
   shuffleBtn.style.opacity = isShuffle ? 1 : 0.5;
 });
 
-// Lecture avec stats et shuffle
-function playTrack(track) {
-  audio.src = track.file;
-  audio.play();
-  nowPlaying.textContent = "Lecture : " + track.title;
-  coverImg.src = track.cover || "covers/default.jpg";
-  incrementStat(track.title);
-  updatePlayCount(track.title);
-  currentTrackTitle = track.title;
-}
-
-// Incrémente et affiche le compteur
-function incrementStat(title) {
-  const key = 'play_' + title;
-  let count = parseInt(localStorage.getItem(key) || "0");
-  localStorage.setItem(key, count + 1);
-}
-
-function updatePlayCount(title) {
-  const count = localStorage.getItem('play_' + title) || "0";
-  playCountEl.textContent = `Écoutes : ${count}`;
-}
-
-let currentTrackTitle = null;
-
-// Lecture suivante en mode shuffle
+// Lecture suivante en shuffle
 audio.addEventListener('ended', () => {
   if (isShuffle && allTracks.length > 1) {
     let next;
@@ -184,7 +214,8 @@ audio.addEventListener('ended', () => {
     playTrack(next);
   }
 });
-// Charger le Top 5 des morceaux les plus écoutés
+
+// Top 5
 fetch('/api/top')
   .then(res => res.json())
   .then(top => {
@@ -197,8 +228,8 @@ fetch('/api/top')
       ul.appendChild(li);
     });
   });
-const userArea = document.getElementById('userArea');
 
+// Gestion utilisateur
 fetch('/api/profile')
   .then(res => {
     if (!res.ok) throw new Error('Non connecté');
@@ -229,20 +260,12 @@ fetch('/api/profile')
     const loginLink = document.createElement('a');
     loginLink.href = '/login.html';
     loginLink.textContent = 'Connexion';
-    loginLink.style.textDecoration = 'none';
-    loginLink.style.color = 'var(--text-color, #fff)';
-    loginLink.style.padding = '0.3rem 0.6rem';
-    loginLink.style.border = '1px solid var(--text-color, #fff)';
-    loginLink.style.borderRadius = '4px';
+    loginLink.className = 'auth-link';
 
     const registerLink = document.createElement('a');
     registerLink.href = '/register.html';
     registerLink.textContent = 'Inscription';
-    registerLink.style.textDecoration = 'none';
-    registerLink.style.color = 'var(--text-color, #fff)';
-    registerLink.style.padding = '0.3rem 0.6rem';
-    registerLink.style.border = '1px solid var(--text-color, #fff)';
-    registerLink.style.borderRadius = '4px';
+    registerLink.className = 'auth-link';
 
     userArea.appendChild(loginLink);
     userArea.appendChild(registerLink);
