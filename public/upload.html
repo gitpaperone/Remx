@@ -68,18 +68,56 @@
 <body>
   <main>
     <h1>Uploader une nouvelle piste</h1>
-    <form action="/upload" method="POST" enctype="multipart/form-data">
+    <form onsubmit="handleUpload(event)">
       <label for="title">Titre :</label>
-      <input type="text" name="title" required>
+      <input type="text" id="title" required>
 
       <label for="cover">Image de couverture (.jpg uniquement) :</label>
-      <input type="file" name="cover" accept=".jpg,image/jpeg" required>
+      <input type="file" id="cover" accept=".jpg,image/jpeg" required>
 
       <label for="file">Fichier audio :</label>
-      <input type="file" name="file" accept="audio/*" required>
+      <input type="file" id="file" accept="audio/*" required>
 
       <button type="submit">Envoyer</button>
     </form>
   </main>
+
+  <!-- Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const supabase = supabase.createClient(
+      'https://TON_URL_SUPABASE.supabase.co',
+      'TON_ANON_KEY'
+    );
+
+    async function handleUpload(event) {
+      event.preventDefault(); // empêcher le rechargement de page
+
+      const title = document.getElementById('title').value;
+      const audioFile = document.getElementById('file').files[0];
+      const coverFile = document.getElementById('cover').files[0];
+
+      if (!title || !audioFile || !coverFile) {
+        alert("Merci de remplir tous les champs !");
+        return;
+      }
+
+      // Upload audio
+      const { data: audioData, error: audioError } = await supabase
+        .storage.from('musics')
+        .upload(`uploads/${audioFile.name}`, audioFile, { upsert: true });
+
+      // Upload cover
+      const { data: coverData, error: coverError } = await supabase
+        .storage.from('musics')
+        .upload(`covers/${coverFile.name}`, coverFile, { upsert: true });
+
+      if (audioError || coverError) {
+        alert("Erreur upload : " + (audioError?.message || coverError?.message));
+      } else {
+        alert(`Upload réussi ! 🎉\nTitre : ${title}\nAudio : ${audioData.path}\nCover : ${coverData.path}`);
+      }
+    }
+  </script>
 </body>
 </html>
