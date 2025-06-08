@@ -22,8 +22,8 @@ let currentTrackTitle = null;
 // Supabase
 const { createClient } = supabase;
 const supabaseClient = createClient(
-  'https://TON_URL_SUPABASE.supabase.co',
-  'TON_ANON_KEY'
+  'https://abiiqzhgfntisjihwprp.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFiaWlxemhnZm50aXNqaWh3cHJwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkzNzc3MjksImV4cCI6MjA2NDk1MzcyOX0.dJAcl6edgiC9JsBP8MJ0QfkvAljCK8nVoKV75VNlL28'
 );
 const BUCKET = 'musics';
 const FOLDER = 'uploads';
