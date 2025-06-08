@@ -4,24 +4,26 @@
   <meta charset="UTF-8">
   <title>Remx - Bibliothèque</title>
   <link rel="stylesheet" href="style.css">
+  <!-- ✅ Ajout de Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 </head>
 <body>
   
- <header style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
-  <h1>Remx</h1>
+  <header style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+    <h1>Remx</h1>
 
-  <!-- Bouton upload en haut à droite -->
-  <a href="upload.html" class="cta-button small">➕ Uploader</a>
+    <!-- Bouton upload en haut à droite -->
+    <a href="upload.html" class="cta-button small">➕ Uploader</a>
 
-  <!-- Barre recherche + tri alignés horizontalement -->
-  <div style="display: flex; gap: 1rem; flex-wrap: wrap; width: 100%; margin-top: 1rem;">
-    <input type="text" id="search" placeholder="Rechercher une musique..." />
-    <select id="sortSelect">
-      <option value="alpha">Trier A-Z</option>
-      <option value="recent">Trier par date</option>
-    </select>
-  </div>
-</header>
+    <!-- Barre recherche + tri alignés horizontalement -->
+    <div style="display: flex; gap: 1rem; flex-wrap: wrap; width: 100%; margin-top: 1rem;">
+      <input type="text" id="search" placeholder="Rechercher une musique..." />
+      <select id="sortSelect">
+        <option value="alpha">Trier A-Z</option>
+        <option value="recent">Trier par date</option>
+      </select>
+    </div>
+  </header>
 
   <main>
     <section id="music-list">
@@ -46,6 +48,7 @@
     </div>
   </footer>
 
+  <!-- ✅ Charger ton script après Supabase -->
   <script src="script.js"></script>
 </body>
 </html>
