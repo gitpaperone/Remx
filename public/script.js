@@ -41,12 +41,14 @@ async function fetchTracksFromSupabase() {
     return;
   }
 
-  const mp3Files = files.filter(f => f.name.endsWith('.mp3'));
-  const jpgFiles = files.filter(f => f.name.endsWith('.jpg'));
+  const mp3Files = files.filter(f => f.name.toLowerCase().endsWith('.mp3'));
+  const jpgFiles = files.filter(f => f.name.toLowerCase().endsWith('.jpg'));
 
   allTracks = mp3Files.map(mp3 => {
-    const title = mp3.name.replace('.mp3', '');
-    const image = jpgFiles.find(img => img.name === `${title}.jpg`);
+    const title = mp3.name.replace(/\.mp3$/i, '');
+    const image = jpgFiles.find(img =>
+      img.name.toLowerCase() === `${title.toLowerCase()}.jpg`
+    );
     const filePath = `${FOLDER}/${mp3.name}`;
     const coverPath = image ? `${FOLDER}/${image.name}` : "covers/default.jpg";
 
