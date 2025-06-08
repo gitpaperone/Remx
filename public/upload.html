@@ -82,46 +82,47 @@
     </form>
   </main>
 
-  <!-- Supabase JS -->
+  <!-- Supabase JS SDK v2 -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    const { createClient } = supabase;
-    const supabaseClient = createClient(
-      'https://abiiqzhgfntisjihwprp.supabase.co',   // 🔁 remplace par ton URL Supabase
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFiaWlxemhnZm50aXNqaWh3cHJwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkzNzc3MjksImV4cCI6MjA2NDk1MzcyOX0.dJAcl6edgiC9JsBP8MJ0QfkvAljCK8nVoKV75VNlL28'                            // 🔁 remplace par ta clé anonyme
-    );
+    window.addEventListener("DOMContentLoaded", () => {
+      const { createClient } = supabase;
 
-    async function handleUpload(event) {
-      event.preventDefault();
+      const supabaseClient = createClient(
+        'https://abiiqzhgfntisjihwprp.supabase.co', // ✅ Ton URL Supabase
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFiaWlxemhnZm50aXNqaWh3cHJwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkzNzc3MjksImV4cCI6MjA2NDk1MzcyOX0.dJAcl6edgiC9JsBP8MJ0QfkvAljCK8nVoKV75VNlL28' // ✅ Ta clé publique (anon)
+      );
 
-      const title = document.getElementById('title').value.trim();
-      const audioFile = document.getElementById('file').files[0];
-      const coverFile = document.getElementById('cover').files[0];
+      async function handleUpload(event) {
+        event.preventDefault();
 
-      if (!title || !audioFile || !coverFile) {
-        alert("Merci de remplir tous les champs !");
-        return;
+        const title = document.getElementById('title').value.trim();
+        const audioFile = document.getElementById('file').files[0];
+        const coverFile = document.getElementById('cover').files[0];
+
+        if (!title || !audioFile || !coverFile) {
+          alert("Merci de remplir tous les champs !");
+          return;
+        }
+
+        const { error: audioError } = await supabaseClient
+          .storage.from('musics')
+          .upload(`uploads/${title}.mp3`, audioFile, { upsert: true });
+
+        const { error: coverError } = await supabaseClient
+          .storage.from('musics')
+          .upload(`uploads/${title}.jpg`, coverFile, { upsert: true });
+
+        if (audioError || coverError) {
+          alert("Erreur upload : " + (audioError?.message || coverError?.message));
+        } else {
+          alert(`✅ Upload réussi !\nTitre : ${title}`);
+          document.getElementById("upload-form").reset();
+        }
       }
 
-      // Upload audio
-      const { data: audioData, error: audioError } = await supabaseClient
-        .storage.from('musics')
-        .upload(`uploads/${title}.mp3`, audioFile, { upsert: true });
-
-      // Upload cover
-      const { data: coverData, error: coverError } = await supabaseClient
-        .storage.from('musics')
-        .upload(`uploads/${title}.jpg`, coverFile, { upsert: true });
-
-      if (audioError || coverError) {
-        alert("Erreur upload : " + (audioError?.message || coverError?.message));
-      } else {
-        alert(`✅ Upload réussi !\nTitre : ${title}`);
-        document.getElementById("upload-form").reset();
-      }
-    }
-
-    document.getElementById("upload-form").addEventListener("submit", handleUpload);
+      document.getElementById("upload-form").addEventListener("submit", handleUpload);
+    });
   </script>
 </body>
 </html>
