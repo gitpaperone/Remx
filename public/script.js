@@ -1,3 +1,4 @@
+// 🎵 Éléments DOM
 const listEl = document.getElementById('music-list');
 const audio = document.getElementById('audio');
 const nowPlaying = document.getElementById('now-playing');
@@ -19,19 +20,19 @@ let allTracks = [];
 let isShuffle = false;
 let currentTrackTitle = null;
 
-// Supabase
+// ✅ Supabase init
 const { createClient } = supabase;
 const supabaseClient = createClient(
   'https://abiiqzhgfntisjihwprp.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFiaWlxemhnZm50aXNqaWh3cHJwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkzNzc3MjksImV4cCI6MjA2NDk1MzcyOX0.dJAcl6edgiC9JsBP8MJ0QfkvAljCK8nVoKV75VNlL28'
 );
+
 const BUCKET = 'musics';
 const FOLDER = 'uploads';
 
-// Récupération des musiques
+// 📥 Chargement des musiques
 async function fetchTracksFromSupabase() {
-  const { data: files, error } = await supabaseClient
-    .storage
+  const { data: files, error } = await supabaseClient.storage
     .from(BUCKET)
     .list(FOLDER, { limit: 100 });
 
@@ -49,15 +50,12 @@ async function fetchTracksFromSupabase() {
     const image = jpgFiles.find(img =>
       img.name.toLowerCase() === `${title.toLowerCase()}.jpg`
     );
+
     const filePath = `${FOLDER}/${mp3.name}`;
-    const coverPath = image ? `${FOLDER}/${image.name}` : "covers/default.jpg";
+    const coverPath = image ? `${FOLDER}/${image.name}` : null;
 
-    const audioUrl = supabaseClient
-      .storage
-      .from(BUCKET)
-      .getPublicUrl(filePath).publicUrl;
-
-    const coverUrl = image
+    const audioUrl = supabaseClient.storage.from(BUCKET).getPublicUrl(filePath).publicUrl;
+    const coverUrl = coverPath
       ? supabaseClient.storage.from(BUCKET).getPublicUrl(coverPath).publicUrl
       : "covers/default.jpg";
 
@@ -74,7 +72,7 @@ async function fetchTracksFromSupabase() {
 
 fetchTracksFromSupabase();
 
-// Affichage des musiques
+// 🎨 Affichage
 function renderTracks(filter = "") {
   listEl.innerHTML = '';
   let filtered = allTracks.filter(track =>
@@ -82,11 +80,8 @@ function renderTracks(filter = "") {
   );
 
   const sortValue = sortSelect?.value;
-  if (sortValue === 'alpha') {
-    filtered.sort((a, b) => a.title.localeCompare(b.title));
-  } else if (sortValue === 'recent') {
-    filtered.sort((a, b) => b.date - a.date);
-  }
+  if (sortValue === 'alpha') filtered.sort((a, b) => a.title.localeCompare(b.title));
+  else if (sortValue === 'recent') filtered.sort((a, b) => b.date - a.date);
 
   if (filtered.length === 0) {
     listEl.innerHTML = "<p>Aucun morceau trouvé 🎵</p>";
@@ -104,8 +99,13 @@ function renderTracks(filter = "") {
   }
 }
 
-// Lecture d'un morceau
+// ▶️ Lecture
 function playTrack(track) {
+  if (!track?.file) {
+    nowPlaying.textContent = "Fichier audio manquant 😞";
+    return;
+  }
+
   audio.src = track.file;
   audio.play();
   nowPlaying.textContent = "Lecture : " + track.title;
@@ -115,7 +115,7 @@ function playTrack(track) {
   currentTrackTitle = track.title;
 }
 
-// Incrémentation des stats
+// 📈 Incrémenter stats locales et serveur
 function incrementStat(title) {
   const key = 'play_' + title;
   let count = parseInt(localStorage.getItem(key) || "0");
@@ -133,15 +133,11 @@ function updatePlayCount(title) {
   playCountEl.textContent = `Écoutes : ${count}`;
 }
 
-// Recherche et tri
-searchInput?.addEventListener('input', e => {
-  renderTracks(e.target.value);
-});
-sortSelect?.addEventListener('change', () => {
-  renderTracks(searchInput?.value || "");
-});
+// 🔍 Recherche & tri
+searchInput?.addEventListener('input', e => renderTracks(e.target.value));
+sortSelect?.addEventListener('change', () => renderTracks(searchInput?.value || ""));
 
-// Thème
+// 🌓 Thème clair/sombre
 if (localStorage.getItem('theme') === 'light') {
   document.body.classList.add('light');
   if (themeSwitch) themeSwitch.checked = true;
@@ -151,18 +147,13 @@ themeSwitch?.addEventListener('change', () => {
   localStorage.setItem('theme', document.body.classList.contains('light') ? 'light' : 'dark');
 });
 
-// Contrôles audio
+// 🔊 Contrôles
 playPauseBtn.addEventListener('click', () => {
   audio.paused ? audio.play() : audio.pause();
 });
 
-audio.addEventListener('play', () => {
-  playPauseBtn.textContent = '⏸️';
-});
-
-audio.addEventListener('pause', () => {
-  playPauseBtn.textContent = '▶️';
-});
+audio.addEventListener('play', () => playPauseBtn.textContent = '⏸️');
+audio.addEventListener('pause', () => playPauseBtn.textContent = '▶️');
 
 audio.addEventListener('loadedmetadata', () => {
   seekBar.max = audio.duration;
@@ -182,31 +173,30 @@ audio.addEventListener('error', () => {
   nowPlaying.textContent = "Erreur de lecture 😞";
 });
 
-// Format MM:SS
+// ⏱️ Format durée
 function formatTime(seconds) {
   const min = Math.floor(seconds / 60);
   const sec = Math.floor(seconds % 60).toString().padStart(2, '0');
   return `${min}:${sec}`;
 }
 
-// Volume
+// 🔉 Volume
 volumeControl.addEventListener('input', () => {
   audio.volume = volumeControl.value;
 });
 
-// Loop toggle
+// 🔁 Boucle
 loopBtn.addEventListener('click', () => {
   audio.loop = !audio.loop;
   loopBtn.style.opacity = audio.loop ? 1 : 0.5;
 });
 
-// Shuffle toggle
+// 🔀 Aléatoire
 shuffleBtn.addEventListener('click', () => {
   isShuffle = !isShuffle;
   shuffleBtn.style.opacity = isShuffle ? 1 : 0.5;
 });
 
-// Lecture suivante en shuffle
 audio.addEventListener('ended', () => {
   if (isShuffle && allTracks.length > 1) {
     let next;
@@ -217,7 +207,7 @@ audio.addEventListener('ended', () => {
   }
 });
 
-// Top 5
+// 🏆 Top 5
 fetch('/api/top')
   .then(res => res.json())
   .then(top => {
@@ -231,7 +221,7 @@ fetch('/api/top')
     });
   });
 
-// Gestion utilisateur
+// 👤 Authentification
 fetch('/api/profile')
   .then(res => {
     if (!res.ok) throw new Error('Non connecté');
@@ -251,8 +241,7 @@ fetch('/api/profile')
     logoutBtn.style.borderRadius = '4px';
 
     logoutBtn.onclick = () => {
-      fetch('/api/logout', { method: 'POST' })
-        .then(() => location.reload());
+      fetch('/api/logout', { method: 'POST' }).then(() => location.reload());
     };
 
     userArea.appendChild(usernameSpan);
