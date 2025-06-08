@@ -43,20 +43,20 @@ async function fetchTracksFromSupabase() {
   }
 
   const mp3Files = files.filter(f => f.name.toLowerCase().endsWith('.mp3'));
-  const jpgFiles = files.filter(f => f.name.toLowerCase().endsWith('.jpg'));
+  const jpgFiles = files.filter(f => f.name.toLowerCase().endsWith('.jpg') || f.name.toLowerCase().endsWith('.jpeg'));
 
   allTracks = mp3Files.map(mp3 => {
     const title = mp3.name.replace(/\.mp3$/i, '');
     const image = jpgFiles.find(img =>
-      img.name.toLowerCase() === `${title.toLowerCase()}.jpg`
+      img.name.toLowerCase().startsWith(title.toLowerCase())
     );
 
     const filePath = `${FOLDER}/${mp3.name}`;
     const coverPath = image ? `${FOLDER}/${image.name}` : null;
 
-    const audioUrl = supabaseClient.storage.from(BUCKET).getPublicUrl(filePath).publicUrl;
+    const audioUrl = supabaseClient.storage.from(BUCKET).getPublicUrl(filePath).data.publicUrl;
     const coverUrl = coverPath
-      ? supabaseClient.storage.from(BUCKET).getPublicUrl(coverPath).publicUrl
+      ? supabaseClient.storage.from(BUCKET).getPublicUrl(coverPath).data.publicUrl
       : "covers/default.jpg";
 
     return {
