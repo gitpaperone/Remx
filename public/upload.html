@@ -68,7 +68,7 @@
 <body>
   <main>
     <h1>Uploader une nouvelle piste</h1>
-    <form onsubmit="handleUpload(event)">
+    <form id="upload-form">
       <label for="title">Titre :</label>
       <input type="text" id="title" required>
 
@@ -82,11 +82,13 @@
     </form>
   </main>
 
+  <!-- Supabase JS -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    const supabase = supabase.createClient(
-      'https://TON_URL_SUPABASE.supabase.co',
-      'TON_ANON_KEY'
+    const { createClient } = supabase;
+    const supabaseClient = createClient(
+      'https://TON_URL_SUPABASE.supabase.co',   // 🔁 remplace par ton URL Supabase
+      'TON_ANON_KEY'                            // 🔁 remplace par ta clé anonyme
     );
 
     async function handleUpload(event) {
@@ -101,23 +103,25 @@
         return;
       }
 
-      const mp3Path = `uploads/${title}.mp3`;
-      const coverPath = `uploads/${title}.jpg`;
-
-      const { data: audioData, error: audioError } = await supabase
+      // Upload audio
+      const { data: audioData, error: audioError } = await supabaseClient
         .storage.from('musics')
-        .upload(mp3Path, audioFile, { upsert: true });
+        .upload(`uploads/${title}.mp3`, audioFile, { upsert: true });
 
-      const { data: coverData, error: coverError } = await supabase
+      // Upload cover
+      const { data: coverData, error: coverError } = await supabaseClient
         .storage.from('musics')
-        .upload(coverPath, coverFile, { upsert: true });
+        .upload(`uploads/${title}.jpg`, coverFile, { upsert: true });
 
       if (audioError || coverError) {
         alert("Erreur upload : " + (audioError?.message || coverError?.message));
       } else {
-        alert(`✅ Upload réussi !\nTitre : ${title}\nAudio : ${mp3Path}\nCover : ${coverPath}`);
+        alert(`✅ Upload réussi !\nTitre : ${title}`);
+        document.getElementById("upload-form").reset();
       }
     }
+
+    document.getElementById("upload-form").addEventListener("submit", handleUpload);
   </script>
 </body>
 </html>
